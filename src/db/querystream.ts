@@ -142,7 +142,7 @@ export abstract class QueryStream<TEntity> extends Query<TEntity> {
                     if (error != null)
                         reject(error);
                     else
-                        resolve(new RecordSet(records, changedRecords || affectedRecords, (Date.now() - timed), totalRecords >= 0 ? (taken > 0 ? totalPredicateIterations : totalRecords) : undefined));
+                        resolve(new RecordSet(records, changedRecords || affectedRecords, (Date.now() - timed), totalRecords >= 0 ? (skipped > 0 ? totalPredicateIterations : totalRecords) : undefined));
                 })
 
             }
