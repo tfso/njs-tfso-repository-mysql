@@ -19,7 +19,7 @@ export abstract class QueryStream<TEntity> extends Query<TEntity> {
     public set connection(connection: MySql.Connection) {
         this._connection = connection;
     }
-
+        
     protected input(name: string, value: any): void
     protected input(name: string, type: any, value: any): void
     protected input(name: string, type: any, value?: any): void {
@@ -28,6 +28,10 @@ export abstract class QueryStream<TEntity> extends Query<TEntity> {
         }
 
         this.parameters[name] = { name: name, type: type, value: value };
+    }
+
+    protected createConnection(): MySql.Connection {
+        return this._connection;
     }
 
     protected executeQuery(): Promise<IRecordSet<TEntity>> {
@@ -74,9 +78,7 @@ export abstract class QueryStream<TEntity> extends Query<TEntity> {
                     parameters[param.name] = param.value;
                 }
 
-                
-
-                query = this._connection.query(this.commandText, parameters);
+                query = this.createConnection().query(this.commandText, parameters);
 
                 query.on('fields', fields => {
                     if (totalRecords < 0)

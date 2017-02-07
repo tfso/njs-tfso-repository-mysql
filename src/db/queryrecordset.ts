@@ -30,6 +30,10 @@ export abstract class QueryRecordSet<TEntity> extends Query<TEntity> {
         this.parameters[name] = { name: name, type: type, value: value };
     }
 
+    protected createConnection(): MySql.Connection {
+        return this._connection;
+    }
+
     protected executeQuery(): Promise<IRecordSet<TEntity>> {
         return new Promise((resolve, reject) => {
             try {
@@ -44,7 +48,7 @@ export abstract class QueryRecordSet<TEntity> extends Query<TEntity> {
                     parameters[param.name] = param.value;
                 }
 
-                this._connection.query(this.commandText, parameters, (err, result, fields) => {
+                this.createConnection().query(this.commandText, parameters, (err, result, fields) => {
                     if (err)
                         return reject(err);
 

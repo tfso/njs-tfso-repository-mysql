@@ -5,6 +5,9 @@ import * as MySql from 'mysql';
 import { QueryRecordSet, RecordSet } from './../db/queryrecordset';
 import { ConnectionMock } from './base/connectionmock';
 
+import { SkipOperator } from 'tfso-repository/lib/linq/operators/skipoperator';
+import { TakeOperator } from 'tfso-repository/lib/linq/operators/takeoperator';
+
 describe("When using QueryRecordSet for MySql queries", () => {
     var myQuery: Select,
         data: Array<any>;
@@ -27,7 +30,6 @@ describe("When using QueryRecordSet for MySql queries", () => {
         ];
 
         myQuery = new Select(data);
-        myQuery.connection = new ConnectionMock(data);
     })
 
     it("should return all records", () => {
@@ -45,6 +47,53 @@ describe("When using QueryRecordSet for MySql queries", () => {
                 assert.equal(recordset.records.length, 5);
                 assert.equal(recordset.records[0].name, "JKL");
             });
+    })
+
+    it("should handle paging with total count for in-memory paging", () => {
+        myQuery.query.where(it => it.no > 5).skip(3).take(5);
+
+        return myQuery
+            .then(recordset => {
+                assert.equal(recordset.records.length, 5);
+                assert.equal(recordset.totalLength, 8);
+                assert.equal(recordset.records[0].name, "YZÆ");
+            })
+    })
+
+    it("should handle paging with total count for database paging", () => {
+        myQuery = new Select([]);
+        myQuery.query.where(it => it.no > 5).skip(3).take(5);
+
+
+        // since database is doing its paging we should remove the operators
+        let skip = myQuery.query.operations.first(SkipOperator);
+        let take = myQuery.query.operations.first(TakeOperator);
+
+        myQuery.query.operations.remove(skip);
+        myQuery.query.operations.remove(take);
+
+        // faking database paging now
+        data = data
+            .map(el => {
+                return {
+                    no: el.no,
+                    name: el.name,
+                    pagingTotalCount: 8
+                };
+            })
+            .filter(it => {
+                return it.no > 5
+            })
+            .slice((<SkipOperator<IModel>>skip).count, (<TakeOperator<IModel>>take).count + (<TakeOperator<IModel>>take).count);
+
+        myQuery.data = data;
+
+        return myQuery
+            .then(recordset => {
+                assert.equal(recordset.records.length, 5);
+                assert.equal(recordset.totalLength, 8);
+                assert.equal(recordset.records[0].name, "YZÆ");
+            })
     })
 
     it("should be able to skip rows", () => {
@@ -95,7 +144,7 @@ describe("When using QueryRecordSet for MySql queries", () => {
     });
 
     it("should fail for driver/query problems", (done) => {
-        myQuery.connection = new ConnectionMock(data, true);
+        myQuery.shouldFail = true;
 
         myQuery
             .then((model) => {
@@ -109,7 +158,7 @@ describe("When using QueryRecordSet for MySql queries", () => {
     })
 
     it("should fail for driver/query problems using catch", (done) => {
-        myQuery.connection = new ConnectionMock(data, true);
+        myQuery.shouldFail = true;
 
         myQuery
             .then((model) => {
@@ -124,7 +173,7 @@ describe("When using QueryRecordSet for MySql queries", () => {
     })
 
     it("should fail for driver/query problems using only catch", (done) => {
-        myQuery.connection = new ConnectionMock(data, true);
+        myQuery.shouldFail = true;
 
         myQuery
             .catch((err) => {
@@ -136,7 +185,7 @@ describe("When using QueryRecordSet for MySql queries", () => {
     })
 
     it("should fail for driver/query problems using nested catch", (done) => {
-        myQuery.connection = new ConnectionMock(data, true);
+        myQuery.shouldFail = true;
 
         Promise.resolve(
             myQuery.then(() => {
@@ -160,7 +209,10 @@ interface IModel {
 
 class Select  extends QueryRecordSet<IModel>
 {
-    constructor(private data: Array<any>) {
+    // for mocking
+    public shouldFail = false;
+
+    constructor(public data: Array<any>) {
         super();
 
         this.commandText = "SELECT 1 AS no, 'Tekst' AS name WHERE 1 = @num";
@@ -171,6 +223,13 @@ class Select  extends QueryRecordSet<IModel>
             no: record.no,
             name: record.name
         };
+    }
+
+    /**
+     * Overriding for mocking as we don't have a valid MsSql connection and request
+     */
+    protected createConnection(): MySql.Connection {
+        return new ConnectionMock(this.data, this.shouldFail)
     }
 }
 
