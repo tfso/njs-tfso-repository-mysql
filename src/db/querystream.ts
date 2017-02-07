@@ -42,7 +42,8 @@ export abstract class QueryStream<TEntity> extends Query<TEntity> {
                     totalRecords: number = -1,
                     affectedRecords: number = 0,
                     changedRecords: number = 0,
-                    cancelled: boolean = false;
+                    cancelled: boolean = false,
+                    completed: boolean = false;
 
                 let skip: number = undefined, skipped: number = 0,
                     take: number = undefined, taken: number = 0;
@@ -110,12 +111,16 @@ export abstract class QueryStream<TEntity> extends Query<TEntity> {
                                         totalRecords = -2;
                                 }
 
-                                entity = this.transform(row);
+                                if (completed == false) {
+                                    entity = this.transform(row);                                
 
-                                if (predicate(entity) === true) {
-                                    if (skip == null || ++skipped > skip) {
-                                        if (take == null || ++taken <= take)
-                                            records.push(entity);
+                                    if (predicate(entity) === true) {
+                                        if (skip == null || ++skipped > skip) {
+                                            if (take == null || ++taken <= take)
+                                                records.push(entity);
+                                            else
+                                                completed = true;
+                                        }
                                     }
                                 }
                             }
