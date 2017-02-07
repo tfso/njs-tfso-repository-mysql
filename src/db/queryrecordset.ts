@@ -33,6 +33,7 @@ export abstract class QueryRecordSet<TEntity> extends Query<TEntity> {
             try {
                 let timed = Date.now(),
                     totalRecords = -1,
+                    totalPredicateIterations: number = 0;
                     parameters = {};
 
                 for (let key in this.parameters) {
@@ -71,6 +72,9 @@ export abstract class QueryRecordSet<TEntity> extends Query<TEntity> {
                                     if (totalRecords == -1) {
                                         let row: any = null;
 
+                                        if (recordset[i].length > totalPredicateIterations)
+                                            totalPredicateIterations = recordset[i].length;
+
                                         if (Array.isArray(recordset[i]) && recordset[i].length > 0)
                                             row = recordset[i][0];
 
@@ -91,7 +95,7 @@ export abstract class QueryRecordSet<TEntity> extends Query<TEntity> {
                             result ? this.query.toArray(results.map(this.transform)) : [],
                             changedRecords || affectedRecords,
                             Date.now() - timed,
-                            totalRecords >= 0 ? totalRecords : undefined)
+                            totalRecords >= 0 ? (totalPredicateIterations > totalRecords ? totalPredicateIterations : totalRecords) : undefined)
                         );
                     }
                     catch (ex) {
