@@ -3,6 +3,8 @@ import { Query } from 'tfso-repository/lib/repository/db/query';
 import { IRecordSet, RecordSet } from 'tfso-repository/lib/repository/db/recordset';
 
 import { WhereOperator } from 'tfso-repository/lib/linq/operators/whereoperator';
+import { SkipOperator } from 'tfso-repository/lib/linq/operators/skipoperator';
+import { TakeOperator } from 'tfso-repository/lib/linq/operators/takeoperator';
 
 export abstract class QueryRecordSet<TEntity> extends Query<TEntity> {
     private _connection: MySql.Connection;
@@ -33,7 +35,7 @@ export abstract class QueryRecordSet<TEntity> extends Query<TEntity> {
             try {
                 let timed = Date.now(),
                     totalRecords = -1,
-                    totalPredicateIterations: number = 0;
+                    totalPredicateIterations: number = 0,
                     parameters = {};
 
                 for (let key in this.parameters) {
@@ -72,9 +74,6 @@ export abstract class QueryRecordSet<TEntity> extends Query<TEntity> {
                                     if (totalRecords == -1) {
                                         let row: any = null;
 
-                                        if (recordset[i].length > totalPredicateIterations)
-                                            totalPredicateIterations = recordset[i].length;
-
                                         if (Array.isArray(recordset[i]) && recordset[i].length > 0)
                                             row = recordset[i][0];
 
@@ -91,11 +90,34 @@ export abstract class QueryRecordSet<TEntity> extends Query<TEntity> {
                             }
                         }
 
+                        // should really validate this.query to see if operators Where, Skip, Take, OrderBy etc comes in correct order otherwhise it's not supported for this kind of database
+                        let where = this.query.operations.first(WhereOperator),
+                            predicate: (entity: TEntity) => boolean,
+                            entities: Array<TEntity>;
+
+                        if (where) {
+                            this.query.operations.remove(where);
+
+                            predicate = ((op: WhereOperator<TEntity>) => {
+                                return (entity: TEntity) => {
+                                    return op.predicate.apply({}, [entity].concat(op.parameters));
+                                }
+                            })(<WhereOperator<TEntity>>where);
+                        }
+
+                        entities = results.map(this.transform);
+                        if (predicate) {
+                            entities = entities.filter(predicate);
+
+                            if (this.query.operations.first(SkipOperator) || this.query.operations.first(TakeOperator))
+                                totalRecords = entities.length;
+                        }
+
                         resolve(new RecordSet(
-                            result ? this.query.toArray(results.map(this.transform)) : [],
+                            result ? this.query.toArray(entities) : [],
                             changedRecords || affectedRecords,
                             Date.now() - timed,
-                            totalRecords >= 0 ? (totalPredicateIterations > totalRecords ? totalPredicateIterations : totalRecords) : undefined)
+                            totalRecords >= 0 ? totalRecords : undefined)
                         );
                     }
                     catch (ex) {
