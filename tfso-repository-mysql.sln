@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.7
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "Repository.MySql", "Repository.MySql.njsproj", "{2700A4C4-D215-47A0-966D-A831CB871E27}"
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "tfso-repository-mysql", "tfso-repository-mysql.njsproj", "{2700A4C4-D215-47A0-966D-A831CB871E27}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
