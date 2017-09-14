@@ -110,7 +110,7 @@ export abstract class QueryStream<TEntity> extends Query<TEntity> {
                                         totalRecords = -2;
                                 }
 
-                                if (completed == false || (completed == true && totalRecords > 0)) { // if completed and query is trying to get paging total count we have to count them as predicate will narrow down result even more
+                                if (completed == false || (completed == true && skip != null)) { // if completed and query is trying to get paging total count we have to count them as predicate will narrow down result even more
                                     entity = this.transform(row);                                
 
                                     if (predicate(entity) === true) {
@@ -140,7 +140,7 @@ export abstract class QueryStream<TEntity> extends Query<TEntity> {
                     if (error != null)
                         reject(error);
                     else
-                        resolve(new RecordSet(records, changedRecords || affectedRecords, (Date.now() - timed), totalRecords >= 0 ? (skipped > 0 ? totalPredicateIterations : totalRecords) : undefined));
+                        resolve(new RecordSet(records, changedRecords || affectedRecords, (Date.now() - timed), skip != null ? totalPredicateIterations : (totalRecords >= 0 ? totalRecords : undefined)));
                 })
 
             }
