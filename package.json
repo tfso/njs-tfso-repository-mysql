@@ -1,6 +1,6 @@
 {
   "name": "tfso-repository-mysql",
-  "version": "0.0.0",
+  "version": "1.0.14",
   "description": "Simplified Query classes for converting from/to MySql database",
   "author": {
     "name": "Nicolai"
@@ -16,17 +16,10 @@
     "test": "node node_modules/mocha/bin/_mocha --reporter spec --recursive lib/test/*.js",
     "cover": "node node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- --reporter spec --recursive lib/test/*.js"
   },
-  "dependencies": {
-    "mysql": "^2.15.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/mocha": "^2.2.41",
     "@types/mysql": "^2.15.2",
-    "@types/node": "^8.5.9",
-    "tfso-repository": "tfso/njs-tfso-repository#1.2.114",
-    "istanbul": "^0.4.4",
-    "mocha": "^4.1.0",
-    "ts-node": "^4.1.0",
-    "typescript": "~2.6.2"
+    "@types/node": "^8.5.9"
   }
 }
