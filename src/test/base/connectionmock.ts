@@ -1,62 +1,71 @@
 ﻿import * as MySql from 'mysql';
 
 import { EventEmitter } from 'events';
+import { MysqlError } from 'mysql';
 
 export class ConnectionMock extends EventEmitter implements MySql.Connection {
-    private _config: MySql.ConnectionOptions = undefined;
+    private _config: MySql.ConnectionConfig = undefined;
 
     constructor(private data: Array<any>, private shouldFail: boolean = false) {
         super();
-
-
     }
 
-    public set config(value: MySql.ConnectionOptions) {
+    public set config(value) {
         this._config = value;
     }
 
-    public get config(): MySql.ConnectionOptions {
+    public get config() {
         return this._config;
     }
 
+    public get state(): 'connected' | 'authenticated' | 'disconnected' | 'protocol_error' | string {
+        return 'connected';
+    }
     
     public get threadId(): number {
         return 0;
     }
 
-    //static createQuery<T extends RowDataPacket[][] | RowDataPacket[] | OkPacket | OkPacket[]>(sql: string, callback?: (err: Query.QueryError | null, result: T, fields: FieldPacket[]) => any): Query;
-    //static createQuery<T extends RowDataPacket[][] | RowDataPacket[] | OkPacket | OkPacket[]>(sql: string, values: any | any[] | { [param: string]: any }, callback?: (err: Query.QueryError | null, result: T, fields: FieldPacket[]) => any): Query;
-
-    public beginTransaction(callback: (err: MySql.QueryError | null) => void): void {
+    public get createQuery(): MySql.QueryFunction {
         throw new Error('Not implemented');
     }
 
-    public connect(callback?: (err: MySql.QueryError | null) => void): void {
+    public beginTransaction(options?: MySql.QueryOptions, callback?: (err: MysqlError) => void): void;
+    public beginTransaction(callback: (err: MysqlError) => void): void;
+    public beginTransaction(): void {
         throw new Error('Not implemented');
     }
 
-    public commit(callback?: (err: MySql.QueryError | null) => void): void {
+    public connect(callback?: (err: MySql.MysqlError | null) => void): void {
         throw new Error('Not implemented');
     }
 
-    public changeUser(options: MySql.ConnectionOptions, callback?: (err: MySql.QueryError | null) => void): void {
+    public commit(options?: MySql.QueryOptions, callback?: (err: MysqlError) => void): void;
+    public commit(callback: (err: MysqlError) => void): void;
+    public commit(): void {
         throw new Error('Not implemented');
     }
 
-    public query<T extends MySql.RowDataPacket[][] | MySql.RowDataPacket[] | MySql.OkPacket | MySql.OkPacket[]>(sql: string, callback?: (err: MySql.QueryError | null, result: T, fields: MySql.FieldPacket[]) => any): MySql.Query
-    public query<T extends MySql.RowDataPacket[][] | MySql.RowDataPacket[] | MySql.OkPacket | MySql.OkPacket[]>(sql: string, values: any | any[] | { [param: string]: any }, callback?: (err: MySql.QueryError | null, result: T, fields: MySql.FieldPacket[]) => any): MySql.Query
-    public query<T extends MySql.RowDataPacket[][] | MySql.RowDataPacket[] | MySql.OkPacket | MySql.OkPacket[]>(options: MySql.QueryOptions, callback?: (err: MySql.QueryError | null, result: T, fields?: MySql.FieldPacket[]) => any): MySql.Query
-    public query<T extends MySql.RowDataPacket[][] | MySql.RowDataPacket[] | MySql.OkPacket | MySql.OkPacket[]>(options: MySql.QueryOptions, values: any | any[] | { [param: string]: any }, callback?: (err: MySql.QueryError | null, result: T, fields: MySql.FieldPacket[]) => any): MySql.Query
+    public changeUser(options: MySql.ConnectionOptions, callback?: (err: MysqlError) => void): void
+    public changeUser(callback: (err: MysqlError) => void): void
+    public changeUser() {
+        throw new Error('Not implemented');
+    }
+
+    public query(query: MySql.Query): MySql.Query
+    public query(sql: string, callback?: (err: MySql.MysqlError | null, results: any, fields: MySql.FieldInfo[]) => any): MySql.Query
+    public query(sql: string, values: any, callback?: (err: MySql.MysqlError | null, result: any, fields: MySql.FieldInfo[]) => any): MySql.Query
+    public query(options: MySql.QueryOptions, callback?: (err: MySql.MysqlError | null, results: any, fields: MySql.FieldInfo[]) => any): MySql.Query
     public query(): any {
 
-        let cb: (err: MySql.QueryError | null, result: TemplateStringsArray, fields: MySql.FieldPacket[]) => any;
+        let cb: (err: MySql.MysqlError | null, result: any, fields: MySql.FieldInfo[]) => any;
 
         switch (typeof (cb = arguments[arguments.length - 1]) == 'function') {
             
             case true: // callback
                 cb.call(cb,
                     this.shouldFail ? new Error('Internal MySql error') : null,
-                    new Array<MySql.RowDataPacket>(...this.data.map(el => {
+                    new Array<any>(...this.data.map(el => {
                         return new RowDataPacket(el);
                     })),
                     Object.getOwnPropertyNames(this.data[0]).map(name => {
@@ -77,7 +86,7 @@ export class ConnectionMock extends EventEmitter implements MySql.Connection {
                             zerofill: undefined // boolean
                         };
                     })
-                );
+                )
                 break;
 
             case false: // eventemitter
@@ -119,11 +128,24 @@ export class ConnectionMock extends EventEmitter implements MySql.Connection {
                 return query;
         }
     }
+
+    public ping(options?: MySql.QueryOptions, callback?: (err: MysqlError) => void): void
+    public ping(callback: (err: MysqlError) => void): void
+    public ping() {
+        throw new Error('Not implemented');
+    }
+
+    public statistics(options?: MySql.QueryOptions, callback?: (err: MysqlError) => void): void
+    public statistics (callback: (err: MysqlError) => void): void
+    public statistics () {
+        throw new Error('Not implemented');
+    }
+
     
-    public end(callback?: (err: MySql.QueryError | null) => void): void
-    public end(options: any, callback?: (err: MySql.QueryError | null) => void): void
+    public end(callback?: (err: MySql.MysqlError | null) => void): void
+    public end(options: any, callback?: (err: MySql.MysqlError | null) => void): void
     public end() {
-        let cb: (err: MySql.QueryError | null) => void;
+        let cb: (err: MySql.MysqlError | null) => void;
 
         if (typeof (cb = arguments[arguments.length - 1]) == 'function') {
             cb.call(cb, null);
@@ -156,16 +178,12 @@ export class ConnectionMock extends EventEmitter implements MySql.Connection {
         return MySql.format(sql, values);
     }
 
-    public rollback(callback: () => void): void {
+    public rollback(options?: MySql.QueryOptions, callback?: (err: MysqlError) => void): void;
+    public rollback(callback: (err: MysqlError) => void): void;
+    public rollback(): void {
         throw new Error('Not implemented');
     }
-
-    
-
 }
-
-
-
 
 function RowDataPacket(el: Object) {
     for (let key in el) {

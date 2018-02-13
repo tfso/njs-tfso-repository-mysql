@@ -108,8 +108,8 @@ export abstract class QueryStream<TEntity> extends Query<TEntity> {
                     switch (row.constructor.name) {
 
                         case 'OkPacket':
-                            affectedRecords += (<MySql.OkPacket>row).affectedRows;
-                            changedRecords += (<MySql.OkPacket>row).changedRows;
+                            affectedRecords += row.affectedRows;
+                            changedRecords += row.changedRows;
 
                             break;
 

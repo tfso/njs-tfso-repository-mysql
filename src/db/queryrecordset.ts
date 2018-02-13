@@ -68,8 +68,8 @@ export abstract class QueryRecordSet<TEntity> extends Query<TEntity> {
 
                             switch (recordset[i].constructor.name) {
                                 case 'OkPacket':
-                                    affectedRecords = (<MySql.OkPacket>recordset[i]).affectedRows;
-                                    changedRecords = (<MySql.OkPacket>recordset[i]).changedRows;
+                                    affectedRecords = recordset[i].affectedRows;
+                                    changedRecords = recordset[i].changedRows;
 
                                     break;
 

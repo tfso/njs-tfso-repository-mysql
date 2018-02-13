@@ -18,7 +18,7 @@ install:
   - npm install -g mocha-appveyor-reporter
   - npm install -g mocha
 build_script:
-  - node node_modules\typescript\bin\tsc --rootDir ./src/ --outDir ./lib
+  - node node_modules\typescript\bin\tsc
   - patch-version
 test_script:
   - mocha --reporter mocha-appveyor-reporter ./lib/test/ --no-exit
@@ -27,11 +27,12 @@ after_test:
   - FOR /f %%n IN ('dir .\node_modules /d /b /a:d ^| findstr /R /C:"^[A-Za-z].*$"') DO npm uninstall %%n
 deploy_script:
   # git tagging source for github releases in addition to artifact to make npm usage useful
+  - rm .gitignore
   - git config --global credential.helper store
   - ps: Add-Content "$env:USERPROFILE\.git-credentials" "https://$($env:access_token):x-oauth-basic@github.com`n"
   - git config --global user.email "post@24sevenoffice.com"
   - git config --global user.name "24SevenOffice"
-  - git add ./lib
+  - git add --force ./lib
   - git commit -a -m "Adding release files"
   - git tag -a %appveyor_build_version% -m "%APPVEYOR_REPO_COMMIT_MESSAGE% %APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED%"
   - git push origin %appveyor_build_version%
