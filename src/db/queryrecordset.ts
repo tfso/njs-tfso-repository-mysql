@@ -59,7 +59,7 @@ export abstract class QueryRecordSet<TEntity> extends Query<TEntity> {
                             changedRecords: number = 0;
 
                         // well, MySql library returns either multiple recordsets or a single recordset, and we really want multiple recordsets
-                        if (Array.isArray(result) && result[0].constructor.name == 'RowDataPacket')
+                        if (Array.isArray(result) && result.length > 0 && result[0].constructor.name == 'RowDataPacket')
                             recordset = [result];
                         else
                             recordset = [].concat(result);
